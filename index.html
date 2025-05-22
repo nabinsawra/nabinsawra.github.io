@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Community Data Entry (with Login)</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #2c3e50; }
+        label { display: block; margin-top: 10px; }
+        input, select, button { width: 100%; padding: 8px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .summary, #logoutSection { margin-top: 20px; }
+        #loginSection { max-width: 400px; margin: auto; }
+    </style>
+</head>
+<body>
+
+<h1>Community Data Entry (Secure Login)</h1>
+
+<div id="loginSection">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p id="loginMessage" style="color:red;"></p>
+</div>
+
+<div id="logoutSection" style="display:none;">
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div id="dataSection" style="display:none;">
+    <form id="dataForm">
+        <label>District:</label>
+        <select id="district">
+            <option value="Sonitpur">Sonitpur</option>
+            <option value="Udalguri">Udalguri</option>
+            <option value="Dibrugarh">Dibrugarh</option>
+        </select>
+
+        <label>Village:</label>
+        <select id="village">
+            <option value="Singrijan T.E">Singrijan T.E</option>
+            <option value="Sessa T.E">Sessa T.E</option>
+            <option value="Fulbright Panchayat">Fulbright Panchayat</option>
+        </select>
+
+        <label>Naam:</label>
+        <input type="text" id="name" required>
+
+        <label>Janam Tithi (DOB):</label>
+        <input type="date" id="dob" required>
+
+        <label>Population (default 1):</label>
+        <input type="number" id="population" value="1" min="1">
+
+        <label>Qualification:</label>
+        <select id="qualification">
+            <option value="Board of Secondary">Board of Secondary</option>
+            <option value="Higher Secondary">Higher Secondary</option>
+            <option value="Graduation">Graduation</option>
+        </select>
+
+        <button type="submit" style="margin-top: 15px;">Add Entry</button>
+    </form>
+
+    <div class="summary">
+        <h2>Summary</h2>
+        <p><strong>Total Population:</strong> <span id="totalPopulation">0</span></p>
+        <p><strong>Qualification Count:</strong></p>
+        <ul>
+            <li>Board of Secondary: <span id="countSecondary">0</span></li>
+            <li>Higher Secondary: <span id="countHigher">0</span></li>
+            <li>Graduation: <span id="countGrad">0</span></li>
+        </ul>
+    </div>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>District</th>
+                <th>Village</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Population</th>
+                <th>Qualification</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIdCSiPQJqSmXtISFC0E09vyLLS5mqXHk",
+    authDomain: "commiunitydata.firebaseapp.com",
+    projectId: "commiunitydata",
+    storageBucket: "commiunitydata.appspot.com",
+    messagingSenderId: "780202940271",
+    appId: "1:780202940271:web:f1f52fb6e32bef49bb3a9a",
+    measurementId: "G-7VHV85ENDY",
+    databaseURL: "https://commiunitydata-default-rtdb.firebaseio.com"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  document.addEventListener("DOMContentLoaded", function () {
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("dataSection").style.display = "block";
+        document.getElementById("logoutSection").style.display = "block";
+      } else {
+        document.getElementById("loginSection").style.display = "block";
+        document.getElementById("dataSection").style.display = "none";
+        document.getElementById("logoutSection").style.display = "none";
+      }
+    });
+
+    document.getElementById("dataForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const district = document.getElementById("district").value;
+      const village = document.getElementById("village").value;
+      const name = document.getElementById("name").value;
+      const dob = document.getElementById("dob").value;
+      const population = parseInt(document.getElementById("population").value);
+      const qualification = document.getElementById("qualification").value;
+
+      const data = {
+          district,
+          village,
+          name,
+          dob,
+          population,
+          qualification,
+          timestamp: Date.now()
+      };
+
+      db.ref("community_entries").push(data);
+
+      const table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow();
+      newRow.innerHTML = `<td>${district}</td><td>${village}</td><td>${name}</td><td>${dob}</td><td>${population}</td><td>${qualification}</td>`;
+
+      totalPopulation += population;
+      document.getElementById("totalPopulation").innerText = totalPopulation;
+
+      if (qualification === "Board of Secondary") countSecondary++;
+      else if (qualification === "Higher Secondary") countHigher++;
+      else if (qualification === "Graduation") countGrad++;
+
+      document.getElementById("countSecondary").innerText = countSecondary;
+      document.getElementById("countHigher").innerText = countHigher;
+      document.getElementById("countGrad").innerText = countGrad;
+
+      document.getElementById("dataForm").reset();
+      document.getElementById("population").value = "1";
+    });
+  });
+
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        // Handled in onAuthStateChanged
+      })
+      .catch((error) => {
+        document.getElementById("loginMessage").innerText = "Login failed: " + error.message;
+      });
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  let totalPopulation = 0;
+  let countSecondary = 0;
+  let countHigher = 0;
+  let countGrad = 0;
+</script>
+
+</body>
+</html>
