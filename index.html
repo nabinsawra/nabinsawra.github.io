@@ -38,19 +38,16 @@
 
 <div id="dataSection" style="display:none;">
     <form id="dataForm">
-        <label>District:</label>
-        <select id="district">
-            <option value="Sonitpur">Sonitpur</option>
-            <option value="Udalguri">Udalguri</option>
-            <option value="Dibrugarh">Dibrugarh</option>
-        </select>
+        <label for="district">District:</label>
+<select id="district" required>
+  <option value="">--Select District--</option>
+</select>
 
-        <label>Village:</label>
-        <select id="village">
-            <option value="Singrijan T.E">Singrijan T.E</option>
-            <option value="Sessa T.E">Sessa T.E</option>
-            <option value="Fulbright Panchayat">Fulbright Panchayat</option>
-        </select>
+<label for="village">Village:</label>
+<select id="village" required>
+  <option value="">--Select Village--</option>
+</select>
+
 
         <label>Naam:</label>
         <input type="text" id="name" required>
