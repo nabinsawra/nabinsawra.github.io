@@ -295,12 +295,14 @@ document.getElementById("filterVillage").addEventListener("change", () => {
 
 function exportToExcel() {
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([[
-       ["District", "Village", "Name", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"]
-
+    const ws = XLSX.utils.aoa_to_sheet([
+        ["District", "Village", "Name", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"],
+        ...allEntries
+    ]);
     XLSX.utils.book_append_sheet(wb, ws, "Community Data");
     XLSX.writeFile(wb, "community_data.xlsx");
 }
+
 
 function login() {
     const email = document.getElementById("email").value;
