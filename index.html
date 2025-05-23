@@ -306,7 +306,55 @@ function login() {
 function logout() {
     auth.signOut();
 }
+<script>
+  const dbRef = firebase.database().ref("CommunityData");
+
+  const districtDropdown = document.getElementById("district");
+  const villageDropdown = document.getElementById("village");
+
+  // Load Districts
+  dbRef.once('value', snapshot => {
+    const districtSet = new Set();
+    snapshot.forEach(child => {
+      const data = child.val();
+      if (data.district) districtSet.add(data.district);
+    });
+
+    districtSet.forEach(dist => {
+      const option = document.createElement("option");
+      option.value = dist;
+      option.textContent = dist;
+      districtDropdown.appendChild(option);
+    });
+  });
+
+  // Load Villages on District Change
+  districtDropdown.addEventListener('change', () => {
+    const selectedDistrict = districtDropdown.value;
+    villageDropdown.innerHTML = '<option value="">--Select Village--</option>';
+
+    if (!selectedDistrict) return;
+
+    const villageSet = new Set();
+
+    dbRef.once('value', snapshot => {
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (data.district === selectedDistrict && data.village) {
+          villageSet.add(data.village);
+        }
+      });
+
+      villageSet.forEach(vill => {
+        const option = document.createElement("option");
+        option.value = vill;
+        option.textContent = vill;
+        villageDropdown.appendChild(option);
+      });
+    });
+  });
 </script>
+
 
 </body>
 </html>
