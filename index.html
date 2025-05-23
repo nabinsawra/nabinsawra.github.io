@@ -47,6 +47,41 @@
 <select id="village" required>
   <option value="">--Select Village--</option>
 </select>
+        <script>
+const villagesByDistrict = {
+    "Sonitpur": ["Singrijan T.E", "Sessa T.E"],
+    "Udalguri": ["Fulbright Panchayat", "Goraimari"],
+    "Dibrugarh": ["Other"]
+};
+
+const districtDropdown = document.getElementById("district");
+const villageDropdown = document.getElementById("village");
+
+// Populate Districts
+Object.keys(villagesByDistrict).forEach(district => {
+    const option = document.createElement("option");
+    option.value = district;
+    option.textContent = district;
+    districtDropdown.appendChild(option);
+});
+
+// On District Change => Populate Villages
+districtDropdown.addEventListener("change", () => {
+    const selectedDistrict = districtDropdown.value;
+    villageDropdown.innerHTML = '<option value="">--Select Village--</option>';
+
+    if (villagesByDistrict[selectedDistrict]) {
+        villagesByDistrict[selectedDistrict].forEach(village => {
+            const option = document.createElement("option");
+            option.value = village;
+            option.textContent = village;
+            villageDropdown.appendChild(option);
+        });
+    }
+});
+</script>
+
+        
 
 
         <label>Naam:</label>
