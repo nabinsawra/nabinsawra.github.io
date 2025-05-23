@@ -1,355 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Community Data Entry (with Login & Export)</title>
-    <style>
-    body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url(https://i.ibb.co/RT1NFpdD/images.jpg) no-repeat center center;
-        background-size: 300px;
-        opacity: 0.08;
-        z-index: -1;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Data Entry</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
     }
-    </style>
+    form, table {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+    }
+    input, select, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 1em;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .photo-preview {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+    }
+  </style>
 </head>
 <body>
+  <h2>Community Data Entry Form</h2>
+  <form id="dataForm">
+    <select id="gender" required>
+      <option value="">Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
 
-<h1>Community Data Entry (Secure Login)</h1>
+    <input type="file" id="photo" accept="image/*" required>
+    <img id="photoPreview" class="photo-preview" src="#" alt="Preview" style="display:none;">
 
-<div id="loginSection">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button onclick="login()">Login</button>
-    <p id="loginMessage" style="color:red;"></p>
-</div>
+    <button type="submit">Submit</button>
+  </form>
 
-<div id="logoutSection" style="display:none;">
-    <button onclick="logout()">Logout</button>
-</div>
+  <button onclick="generatePDF()">Download Summary PDF</button>
 
-<div id="dataSection" style="display:none;">
-    <form id="dataForm">
-        <label for="district">District:</label>
-        <select id="district" required>
-            <option value="">--Select District--</option>
-        </select>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Gender</th>
+        <th>Photo</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-        <label for="village">Village:</label>
-        <select id="village" required>
-            <option value="">--Select Village--</option>
-        </select>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 
-        <label>Naam:</label>
-        <input type="text" id="name" required>
-
-        <label>Janam Tithi (DOB):</label>
-        <input type="date" id="dob" required>
-
-        <label>Population (default 1):</label>
-        <input type="number" id="population" value="1" min="1">
-
-        <label>Qualification:</label>
-        <select id="qualification">
-            <option value="Board of Secondary">Board of Secondary</option>
-            <option value="Higher Secondary">Higher Secondary</option>
-            <option value="Graduation">Graduation</option>
-        </select>
-        <label>Occupation:</label>
-<select id="occupation" required>
-    <option value="">--Select Occupation--</option>
-    <option value="Employed">Employed</option>
-    <option value="Unemployed">Unemployed</option>
-    <option value="Student">Student</option>
-</select>
-
-
-        <label>Father's Name:</label>
-        <input type="text" id="fatherName" required>
-
-        <label>Mother's Name:</label>
-        <input type="text" id="motherName" required>
-
-        <label>Address:</label>
-        <input type="text" id="address" required>
-
-        <button type="submit" style="margin-top: 15px;">Add Entry</button>
-    </form>
-
-    <button id="showListBtn" style="margin-top: 20px;">Show List</button>
-    <button id="hideListBtn" style="margin-top: 20px; display:none;">Hide List</button>
-
-    <div id="filters">
-        <label>Select District:</label>
-        <select id="filterDistrict">
-            <option value="">--Select District--</option>
-            <option value="Sonitpur">Sonitpur</option>
-            <option value="Udalguri">Udalguri</option>
-            <option value="Dibrugarh">Dibrugarh</option>
-        </select>
-
-        <label>Select Village:</label>
-        <select id="filterVillage">
-            <option value="">--Select Village--</option>
-        </select>
-    </div>
-
-    <div class="summary">
-        <h2>Summary</h2>
-        <p><strong>Total Population:</strong> <span id="totalPopulation">0</span></p>
-        <p><strong>Qualification Count:</strong></p>
-        <ul>
-            <li>Board of Secondary: <span id="countSecondary">0</span></li>
-            <li>Higher Secondary: <span id="countHigher">0</span></li>
-            <li>Graduation: <span id="countGrad">0</span></li>
-        </ul>
-    </div>
-
-    <button onclick="exportToExcel()">Export to Excel</button>
-
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>District</th>
-                <th>Village</th>
-                <th>Name</th>
-                <th>DOB</th>
-                <th>Population</th>
-                <th>Qualification</th>
-                <th>Occupation</th>
-                <th>Father's Name</th>
-                <th>Mother's Name</th>
-                <th>Address</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-
-<script>
-const firebaseConfig = {
-    apiKey: "AIzaSyCIdCSiPQJqSmXtISFC0E09vyLLS5mqXHk",
-    authDomain: "commiunitydata.firebaseapp.com",
-    projectId: "commiunitydata",
-    storageBucket: "commiunitydata.appspot.com",
-    messagingSenderId: "780202940271",
-    appId: "1:780202940271:web:f1f52fb6e32bef49bb3a9a",
-    measurementId: "G-7VHV85ENDY",
-    databaseURL: "https://commiunitydata-default-rtdb.firebaseio.com"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
-
-let totalPopulation = 0;
-let countSecondary = 0;
-let countHigher = 0;
-let countGrad = 0;
-let allEntries = [];
-
-auth.onAuthStateChanged(user => {
-    if (user) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("dataSection").style.display = "block";
-        document.getElementById("logoutSection").style.display = "block";
-    } else {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("dataSection").style.display = "none";
-        document.getElementById("logoutSection").style.display = "none";
-    }
-});
-
-document.getElementById("dataForm").addEventListener("submit", function(event) {
-    event.preventDefault();
-
-    const district = document.getElementById("district").value;
-    const village = document.getElementById("village").value;
-    const name = document.getElementById("name").value;
-    const dob = document.getElementById("dob").value;
-    const population = parseInt(document.getElementById("population").value);
-    const qualification = document.getElementById("qualification").value;
-    const occupation = document.getElementById("occupation").value;
-    const fatherName = document.getElementById("fatherName").value;
-    const motherName = document.getElementById("motherName").value;
-    const address = document.getElementById("address").value;
-
-    const data = {
-        district,
-        village,
-        name,
-        dob,
-        population,
-        qualification,
-        occupation,
-        fatherName,
-        motherName,
-        address,
-        timestamp: Date.now()
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_DATABASE_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
 
-    db.ref("community_entries").push(data);
-
-    document.getElementById("dataForm").reset();
-    document.getElementById("population").value = "1";
-});
-
-document.getElementById("showListBtn").addEventListener("click", () => {
-    document.getElementById("filters").style.display = "block";
-    document.getElementById("hideListBtn").style.display = "inline-block";
-});
-
-document.getElementById("hideListBtn").addEventListener("click", () => {
-    document.getElementById("filters").style.display = "none";
-    document.getElementById("dataTable").style.display = "none";
-    document.getElementById("hideListBtn").style.display = "none";
-});
-
-document.getElementById("filterDistrict").addEventListener("change", () => {
-    const selectedDistrict = document.getElementById("filterDistrict").value;
-    const villageDropdown = document.getElementById("filterVillage");
-
-    const villagesByDistrict = {
-        "Sonitpur": ["Singrijan T.E", "Sessa T.E"],
-        "Udalguri": ["Fulbright Panchayat", "Goraimari"],
-        "Dibrugarh": ["Other"]
-    };
-
-    villageDropdown.innerHTML = '<option value="">--Select Village--</option>';
-    if (selectedDistrict && villagesByDistrict[selectedDistrict]) {
-        villagesByDistrict[selectedDistrict].forEach(village => {
-            const option = document.createElement("option");
-            option.value = village;
-            option.textContent = village;
-            villageDropdown.appendChild(option);
-        });
-    }
-});
-
-document.getElementById("filterVillage").addEventListener("change", () => {
-    const selectedDistrict = document.getElementById("filterDistrict").value;
-    const selectedVillage = document.getElementById("filterVillage").value;
-
-    if (!selectedDistrict || !selectedVillage) return;
-
-    db.ref("community_entries").once("value", snapshot => {
-        const data = snapshot.val();
-        const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = "";
-
-        totalPopulation = 0;
-        countSecondary = 0;
-        countHigher = 0;
-        countGrad = 0;
-        allEntries = [];
-
-        for (let key in data) {
-            const entry = data[key];
-            if (entry.district === selectedDistrict && entry.village === selectedVillage) {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${entry.district}</td>
-                    <td>${entry.village}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.dob}</td>
-                    <td>${entry.population}</td>
-                    <td>${entry.qualification}</td>
-                    <td>${entry.occupation || ''}</td>
-                    <td>${entry.fatherName}</td>
-                    <td>${entry.motherName}</td>
-                    <td>${entry.address}</td>
-                `;
-                tableBody.appendChild(row);
-
-                allEntries.push([
-    entry.district, entry.village, entry.name, entry.dob, entry.population,
-    entry.qualification, entry.occupation || '', entry.fatherName, entry.motherName, entry.address
-]);
-
-
-                totalPopulation += entry.population;
-                if (entry.qualification === "Board of Secondary") countSecondary++;
-                if (entry.qualification === "Higher Secondary") countHigher++;
-                if (entry.qualification === "Graduation") countGrad++;
-            }
+    document.getElementById('photo').addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('photoPreview').src = e.target.result;
+          document.getElementById('photoPreview').style.display = 'block';
         }
-
-        document.getElementById("totalPopulation").innerText = totalPopulation;
-        document.getElementById("countSecondary").innerText = countSecondary;
-        document.getElementById("countHigher").innerText = countHigher;
-        document.getElementById("countGrad").innerText = countGrad;
-
-        document.getElementById("dataTable").style.display = "table";
+        reader.readAsDataURL(file);
+      }
     });
-});
 
-function exportToExcel() {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-        ["District", "Village", "Name", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"],
-        ...allEntries
-    ]);
-    XLSX.utils.book_append_sheet(wb, ws, "Community Data");
-    XLSX.writeFile(wb, "community_data.xlsx");
-}
+    document.getElementById('dataForm').addEventListener('submit', function(e) {
+      e.preventDefault();
 
+      const gender = document.getElementById('gender').value;
+      const file = document.getElementById('photo').files[0];
+      if (!file) return alert("Please select a photo.");
 
-function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, password)
-        .catch((error) => {
-            document.getElementById("loginMessage").innerText = "Login failed: " + error.message;
-        });
-}
+      const storageRef = storage.ref('photos/' + file.name);
+      storageRef.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+      }).then(photoURL => {
+        const entry = { gender, photoURL };
+        db.ref('entries').push(entry);
 
-function logout() {
-    auth.signOut();
-}
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${gender}</td><td><img src="${photoURL}" class="photo-preview"></td>`;
+        document.querySelector('#dataTable tbody').appendChild(row);
 
-// 🚀 District → Village logic for Add Entry form
-const villagesByDistrict = {
-    "Sonitpur": ["Singrijan T.E", "Sessa T.E"],
-    "Udalguri": ["Fulbright Panchayat", "Goraimari"],
-    "Dibrugarh": ["Other"]
-};
+        document.getElementById('dataForm').reset();
+        document.getElementById('photoPreview').style.display = 'none';
+      });
+    });
 
-const districtDropdown = document.getElementById("district");
-const villageDropdown = document.getElementById("village");
-
-// Populate District Dropdown
-Object.keys(villagesByDistrict).forEach(district => {
-    const option = document.createElement("option");
-    option.value = district;
-    option.textContent = district;
-    districtDropdown.appendChild(option);
-});
-
-// On District Select → Show Village
-districtDropdown.addEventListener("change", () => {
-    const selectedDistrict = districtDropdown.value;
-    villageDropdown.innerHTML = '<option value="">--Select Village--</option>';
-
-    if (villagesByDistrict[selectedDistrict]) {
-        villagesByDistrict[selectedDistrict].forEach(village => {
-            const option = document.createElement("option");
-            option.value = village;
-            option.textContent = village;
-            villageDropdown.appendChild(option);
-        });
+    function generatePDF() {
+      const doc = new jsPDF();
+      doc.text("Community Data Summary", 10, 10);
+      const rows = document.querySelectorAll("#dataTable tbody tr");
+      let y = 20;
+      rows.forEach(row => {
+        const gender = row.children[0].innerText;
+        doc.text(`Gender: ${gender}`, 10, y);
+        y += 10;
+      });
+      doc.save("summary.pdf");
     }
-});
-</script>
-
+  </script>
 </body>
 </html>
