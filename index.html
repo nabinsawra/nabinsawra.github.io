@@ -49,16 +49,18 @@
         <input type="text" id="name" required>
          <label>Gender:</label>
         <select id="gender">
-            <option value="Male</option>
-            <option value="Higher Secondary">Female</option>
-            <option value="Graduation">Transgender</option>
-        </select>
-        <label>MaritalStatus:</label>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+  <option value="Transgender">Transgender</option>
+</select>
+
         <select id="maritalstatus">
-            <option value="Board of Secondary">Married</option>
-            <option value="Higher Secondary">Unmarried</option>
-            <option value="Graduation">Widow</option>
-        </select>
+  <option value="Married">Married</option>
+  <option value="Unmarried">Unmarried</option>
+  <option value="Widow">Widow</option>
+</select>
+
+
         <label>Janam Tithi (DOB):</label>
         <input type="date" id="dob" required>
 
@@ -189,8 +191,8 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
     const district = document.getElementById("district").value;
     const village = document.getElementById("village").value;
     const name = document.getElementById("name").value;
-    const village = document.getElementById("gender").value;
-    const village = document.getElementById("maritalstatus").value;
+    const gender = document.getElementById("gender").value;
+    const maritalstatus = document.getElementById("maritalstatus").value;
     const dob = document.getElementById("dob").value;
     const population = parseInt(document.getElementById("population").value);
     const qualification = document.getElementById("qualification").value;
