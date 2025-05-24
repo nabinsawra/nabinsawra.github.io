@@ -213,22 +213,6 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
     const motherName = document.getElementById("motherName").value;
     const address = document.getElementById("address").value;
     const photoFile = document.getElementById("photoInput").files[0];
-    if (photoFile) {
-    const storageRef = firebase.storage().ref("photos/" + Date.now() + "_" + photoFile.name);
-    storageRef.put(photoFile).then(snapshot => {
-        snapshot.ref.getDownloadURL().then(url => {
-            data.photoUrl = url;
-            db.ref("community_entries").push(data);
-        });
-    }).catch(error => {
-        console.error("Photo Upload Error:", error);
-    });
-} else {
-    // फोटो नहीं है, तो सीधे डेटा सेव कर दो
-    db.ref("community_entries").push(data);
-}
-
-
 
     const data = {
         district,
@@ -246,10 +230,23 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
         timestamp: Date.now()
     };
 
-    db.ref("community_entries").push(data);
-
-    document.getElementById("dataForm").reset();
-    document.getElementById("population").value = "1";
+    if (photoFile) {
+        const storageRef = firebase.storage().ref("photos/" + Date.now() + "_" + photoFile.name);
+        storageRef.put(photoFile).then(snapshot => {
+            snapshot.ref.getDownloadURL().then(url => {
+                data.photoUrl = url;   // फोटो का URL डाल दो
+                db.ref("community_entries").push(data); // तब push करो
+                document.getElementById("dataForm").reset();
+                document.getElementById("population").value = "1";
+            });
+        }).catch(error => {
+            console.error("Photo Upload Error:", error);
+        });
+    } else {
+        db.ref("community_entries").push(data);
+        document.getElementById("dataForm").reset();
+        document.getElementById("population").value = "1";
+    }
 });
 
 document.getElementById("showListBtn").addEventListener("click", () => {
