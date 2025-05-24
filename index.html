@@ -135,7 +135,8 @@
     </div>
 
     <button onclick="exportToExcel()">Export to Excel</button>
-
+    <div id="filters" style="display:none;">
+  
     <table id="dataTable">
         <thead>
             <tr>
@@ -320,7 +321,7 @@ document.getElementById("filterVillage").addEventListener("change", () => {
 
                 allEntries.push([
     entry.district, entry.village, entry.name, entry.gender, entry.maritalstatus, entry.dob, entry.population,
-    entry.qualification, entry.occupation || '', entry.fatherName, entry.motherName, entry.address
+    entry.qualification, entry.occupation || '', entry.fatherName, entry.motherName, entry.address,entry.photoUrl || ''
 ]);
 
 
@@ -355,11 +356,13 @@ function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
     auth.signInWithEmailAndPassword(email, password)
-        .catch((error) => {
-            document.getElementById("loginMessage").innerText = "Login failed: " + error.message;
-        });
+    .then(() => {
+        document.getElementById("loginMessage").innerText = "";
+    })
+    .catch(error => {
+        document.getElementById("loginMessage").innerText = error.message;
+    });
 }
-
 function logout() {
     auth.signOut();
 }
