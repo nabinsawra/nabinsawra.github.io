@@ -346,7 +346,7 @@ document.getElementById("filterVillage").addEventListener("change", () => {
 function exportToExcel() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([
-        ["District", "Village", "Name", "Gender", "Maritalstatus", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"],
+        ["District", "Village", "Name", "Gender", "Maritalstatus", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address", "Photo URL"],
         ...allEntries
     ]);
     XLSX.utils.book_append_sheet(wb, ws, "Community Data");
