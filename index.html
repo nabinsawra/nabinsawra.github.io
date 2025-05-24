@@ -99,6 +99,9 @@
 
         <label>Address:</label>
         <input type="text" id="address" required>
+        <label>Photo:</label>
+        <input type="file" id="photoInput" accept="image/*">
+
 
         <button type="submit" style="margin-top: 15px;">Add Entry</button>
     </form>
@@ -157,6 +160,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <script>
@@ -208,6 +212,23 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
     const fatherName = document.getElementById("fatherName").value;
     const motherName = document.getElementById("motherName").value;
     const address = document.getElementById("address").value;
+    const photoFile = document.getElementById("photoInput").files[0];
+    if (photoFile) {
+    const storageRef = firebase.storage().ref("photos/" + Date.now() + "_" + photoFile.name);
+    storageRef.put(photoFile).then(snapshot => {
+        snapshot.ref.getDownloadURL().then(url => {
+            data.photoUrl = url;
+            db.ref("community_entries").push(data);
+        });
+    }).catch(error => {
+        console.error("Photo Upload Error:", error);
+    });
+} else {
+    // फोटो नहीं है, तो सीधे डेटा सेव कर दो
+    db.ref("community_entries").push(data);
+}
+
+
 
     const data = {
         district,
