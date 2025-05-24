@@ -1,474 +1,154 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Community Data Entry (with Login, Photo & Export)</title>
-    <style>
-      body::before {
-          content: "";
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: url(https://i.ibb.co/RT1NFpdD/images.jpg) no-repeat center center;
-          background-size: 300px;
-          opacity: 0.08;
-          z-index: -1;
-      }
-      form, table {
-          background-color: white;
-          padding: 15px;
-          border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          max-width: 900px;
-          margin: 20px auto;
-      }
-      input, select, button {
-          display: block;
-          width: 100%;
-          margin: 10px 0;
-          padding: 8px;
-          font-size: 1em;
-      }
-      .photo-preview {
-          width: 80px;
-          height: 80px;
-          object-fit: cover;
-          margin-top: 8px;
-          display: none;
-          border: 1px solid #ccc;
-      }
-      table {
-          width: 100%;
-          margin-top: 20px;
-          border-collapse: collapse;
-      }
-      th, td {
-          border: 1px solid #ddd;
-          padding: 8px;
-          text-align: center;
-      }
-      th {
-          background-color: #f2f2f2;
-      }
-      img.photo-thumb {
-          width: 50px;
-          height: 50px;
-          object-fit: cover;
-          border-radius: 4px;
-      }
-    </style>
+  <meta charset="UTF-8">
+  <title>Sawra Community Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    .hidden { display: none; }
+    .profile-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; }
+    input, button { padding: 10px; width: 100%; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
+  <h1>Sawra Community Portal</h1>
 
-<h1 style="text-align:center;">Community Data Entry (Secure Login)</h1>
+  <!-- Registration Form -->
+  <div id="registerDiv">
+    <h2>Register</h2>
+    <input type="text" id="regName" placeholder="Full Name" required>
+    <input type="email" id="regEmail" placeholder="Email" required>
+    <input type="password" id="regPassword" placeholder="Password" required>
+    <input type="file" id="regPhoto" accept="image/*" required>
+    <button onclick="register()">Register</button>
+    <p>Already have an account? <a href="#" onclick="toggleForms('login')">Login here</a></p>
+  </div>
 
-<div id="loginSection" style="max-width:400px; margin:20px auto;">
+  <!-- Login Form -->
+  <div id="loginDiv" class="hidden">
     <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Password" required>
+    <input type="email" id="loginEmail" placeholder="Email" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
     <button onclick="login()">Login</button>
-    <p id="loginMessage" style="color:red;"></p>
-</div>
+    <p>Don't have an account? <a href="#" onclick="toggleForms('register')">Register here</a></p>
+  </div>
 
-<div id="logoutSection" style="display:none; text-align:center; margin:10px;">
+  <!-- Profile Info -->
+  <div id="userDiv" class="hidden">
+    <h2>Welcome, <span id="userName"></span>!</h2>
+    <img id="userPhoto" class="profile-img"><br><br>
+    <p>Email: <span id="userEmail"></span></p>
     <button onclick="logout()">Logout</button>
-</div>
+  </div>
 
-<div id="dataSection" style="display:none;">
-    <form id="dataForm">
-        <label for="district">District:</label>
-        <select id="district" required>
-            <option value="">--Select District--</option>
-        </select>
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBZJgOT6gWLcUQU4RxNBnmWq7QJYYKiFzA",
+      authDomain: "sawra-community.firebaseapp.com",
+      projectId: "sawra-community",
+      storageBucket: "sawra-community.appspot.com",
+      messagingSenderId: "98374142478",
+      appId: "1:98374142478:web:99b5c0b927a3be67b16db3"
+    };
 
-        <label for="village">Village:</label>
-        <select id="village" required>
-            <option value="">--Select Village--</option>
-        </select>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const storage = firebase.storage();
+    const db = firebase.firestore();
 
-        <label for="name">Naam:</label>
-        <input type="text" id="name" required>
-        <label for="gender">Gender:</label>
-        <label for="dob">Janam Tithi (DOB):</label>
-        <input type="date" id="dob" required>
+    // Toggle Forms
+    function toggleForms(form) {
+      document.getElementById("loginDiv").classList.toggle("hidden", form !== "login");
+      document.getElementById("registerDiv").classList.toggle("hidden", form !== "register");
+    }
 
-        <label for="population">Population (default 1):</label>
-        <input type="number" id="population" value="1" min="1">
+    // Register User
+    async function register() {
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const photo = document.getElementById("regPhoto").files[0];
 
-        <label for="qualification">Qualification:</label>
-        <select id="qualification">
-            <option value="Board of Secondary">Board of Secondary</option>
-            <option value="Higher Secondary">Higher Secondary</option>
-            <option value="Graduation">Graduation</option>
-        </select>
-
-        <label for="occupation">Occupation:</label>
-        <select id="occupation" required>
-            <option value="">--Select Occupation--</option>
-            <option value="Employed">Employed</option>
-            <option value="Unemployed">Unemployed</option>
-            <option value="Student">Student</option>
-        </select>
-
-        <label for="gender">Gender:</label>
-        <select id="gender" required>
-            <option value="">--Select Gender--</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select>
-
-        <label for="maritalStatus">Marital Status:</label>
-        <select id="maritalStatus" required>
-            <option value="">--Select Marital Status--</option>
-            <option value="Single">Single</option>
-            <option value="Married">Married</option>
-            <option value="Divorced">Divorced</option>
-            <option value="Widowed">Widowed</option>
-        </select>
-
-        <label for="photo">Upload Photo:</label>
-        <input type="file" id="photo" accept="image/*" required>
-        <img id="photoPreview" class="photo-preview" src="#" alt="Preview">
-
-        <label for="fatherName">Father's Name:</label>
-        <input type="text" id="fatherName" required>
-
-        <label for="motherName">Mother's Name:</label>
-        <input type="text" id="motherName" required>
-
-        <label for="address">Address:</label>
-        <input type="text" id="address" required>
-
-        <button type="submit" style="margin-top: 15px;">Add Entry</button>
-    </form>
-
-    <button id="showListBtn" style="margin:20px auto; display:block; max-width:200px;">Show List</button>
-    <button id="hideListBtn" style="margin:20px auto; display:none; max-width:200px;">Hide List</button>
-
-    <div id="filters" style="display:none; max-width:900px; margin:auto;">
-        <label>Select District:</label>
-        <select id="filterDistrict">
-            <option value="">--Select District--</option>
-            <option value="Sonitpur">Sonitpur</option>
-            <option value="Udalguri">Udalguri</option>
-            <option value="Dibrugarh">Dibrugarh</option>
-        </select>
-
-        <label>Select Village:</label>
-        <select id="filterVillage">
-            <option value="">--Select Village--</option>
-        </select>
-    </div>
-
-    <div class="summary" style="max-width:900px; margin:20px auto;">
-        <h2>Summary</h2>
-        <p><strong>Total Population:</strong> <span id="totalPopulation">0</span></p>
-        <p><strong>Qualification Count:</strong></p>
-        <ul>
-            <li>Board of Secondary: <span id="countSecondary">0</span></li>
-            <li>Higher Secondary: <span id="countHigher">0</span></li>
-            <li>Graduation: <span id="countGrad">0</span></li>
-        </ul>
-    </div>
-
-    <div style="text-align:center; margin-bottom:20px;">
-        <button onclick="exportToExcel()" style="max-width:200px;">Export to Excel</button>
-    </div>
-
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>District</th>
-                <th>Village</th>
-                <th>Name</th>
-                <th>DOB</th>
-                <th>Population</th>
-                <th>Qualification</th>
-                <th>Occupation</th>
-                <th>Gender</th>
-                <th>Marital Status</th>
-                <th>Photo URL</th>
-                <th>Father's Name</th>
-                <th>Mother's Name</th>
-                <th>Address</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<!-- SheetJS for Excel export -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-
-<script>
-  const firebaseConfig = {
-      apiKey: "AIzaSyCIdCSiPQJqSmXtISFC0E09vyLLS5mqXHk",
-      authDomain: "commiunitydata.firebaseapp.com",
-      projectId: "commiunitydata",
-      storageBucket: "commiunitydata.appspot.com",
-      messagingSenderId: "780202940271",
-      appId: "1:780202940271:web:f1f52fb6e32bef49bb3a9a",
-      measurementId: "G-7VHV85ENDY",
-      databaseURL: "https://commiunitydata-default-rtdb.firebaseio.com"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const auth = firebase.auth();
-  const storage = firebase.storage();
-
-  let totalPopulation = 0;
-  let countSecondary = 0;
-  let countHigher = 0;
-  let countGrad = 0;
-  let allEntries = [];
-
-  auth.onAuthStateChanged(user => {
-      if (user) {
-          document.getElementById("loginSection").style.display = "none";
-          document.getElementById("dataSection").style.display = "block";
-          document.getElementById("logoutSection").style.display = "block";
-      } else {
-          document.getElementById("loginSection").style.display = "block";
-          document.getElementById("dataSection").style.display = "none";
-          document.getElementById("logoutSection").style.display = "none";
-      }
-  });
-
-  const districtDropdown = document.getElementById("district");
-  const villageDropdown = document.getElementById("village");
-  const villagesByDistrict = {
-      "Sonitpur": ["Singrijan T.E", "Sessa T.E"],
-      "Udalguri": ["Fulbright Panchayat", "Goraimari"],
-      "Dibrugarh": ["Other"]
-  };
-  Object.keys(villagesByDistrict).forEach(dist => {
-      const opt = document.createElement("option");
-      opt.value = dist;
-      opt.textContent = dist;
-      districtDropdown.appendChild(opt);
-  });
-  districtDropdown.addEventListener("change", () => {
-      const sel = districtDropdown.value;
-      villageDropdown.innerHTML = '<option value="">--Select Village--</option>';
-      if (villagesByDistrict[sel]) {
-          villagesByDistrict[sel].forEach(v => {
-              const o = document.createElement("option");
-              o.value = v;
-              o.textContent = v;
-              villageDropdown.appendChild(o);
-          });
-      }
-  });
-
-  document.getElementById("photo").addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = e => {
-              const pp = document.getElementById("photoPreview");
-              pp.src = e.target.result;
-              pp.style.display = "block";
-          };
-          reader.readAsDataURL(file);
-      }
-  });
-
-  document.getElementById("dataForm").addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      // Gather form values
-      const district = document.getElementById("district").value;
-      const village = document.getElementById("village").value;
-      const name = document.getElementById("name").value;
-      const dob = document.getElementById("dob").value;
-      const population = parseInt(document.getElementById("population").value);
-      const qualification = document.getElementById("qualification").value;
-      const occupation = document.getElementById("occupation").value;
-      const gender = document.getElementById("gender").value;
-      const maritalStatus = document.getElementById("maritalStatus").value;
-      const fatherName = document.getElementById("fatherName").value;
-      const motherName = document.getElementById("motherName").value;
-      const address = document.getElementById("address").value;
-      const file = document.getElementById("photo").files[0];
-
-      if (!file) {
-          alert("Please select a photo.");
-          return;
+      if (!name || !email || !password || !photo) {
+        alert("Please fill all fields.");
+        return;
       }
 
-      // Upload photo to Firebase Storage
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name}`;
-      const storageRef = storage.ref(`photos/${fileName}`);
       try {
-          const snapshot = await storageRef.put(file);
-          const photoURL = await snapshot.ref.getDownloadURL();
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
 
-          // Prepare data object including photoURL
-          const data = {
-              district,
-              village,
-              name,
-              dob,
-              population,
-              qualification,
-              occupation,
-              gender,
-              maritalStatus,
-              photoURL,
-              fatherName,
-              motherName,
-              address,
-              timestamp: Date.now()
-          };
+        const photoRef = storage.ref(`users/${user.uid}/profile.jpg`);
+        await photoRef.put(photo);
+        const photoURL = await photoRef.getDownloadURL();
 
-          // Push to Realtime Database
-          await db.ref("community_entries").push(data);
+        await user.updateProfile({ displayName: name, photoURL });
 
-          // Reset form & preview
-          document.getElementById("dataForm").reset();
-          document.getElementById("photoPreview").style.display = "none";
+        await db.collection("users").doc(user.uid).set({
+          name,
+          email,
+          photoURL,
+          uid: user.uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-          alert("Entry added successfully!");
+        showUser(user);
       } catch (error) {
-          console.error("Error uploading photo or saving data:", error);
-          alert("Failed to save entry. Please try again.");
+        alert("Registration Error: " + error.message);
+        console.error(error);
       }
-  });
+    }
 
-  
-  document.getElementById("showListBtn").addEventListener("click", () => {
-      document.getElementById("filters").style.display = "block";
-      document.getElementById("hideListBtn").style.display = "block";
-  });
-  document.getElementById("hideListBtn").addEventListener("click", () => {
-      document.getElementById("filters").style.display = "none";
-      document.getElementById("dataTable").style.display = "none";
-      document.getElementById("hideListBtn").style.display = "none";
-  });
+    // Login User
+    async function login() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
 
-  document.getElementById("filterDistrict").addEventListener("change", () => {
-      const selDist = document.getElementById("filterDistrict").value;
-      const filterVill = document.getElementById("filterVillage");
-      filterVill.innerHTML = '<option value="">--Select Village--</option>';
-      if (villagesByDistrict[selDist]) {
-          villagesByDistrict[selDist].forEach(v => {
-              const o = document.createElement("option");
-              o.value = v;
-              o.textContent = v;
-              filterVill.appendChild(o);
-          });
+      if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
       }
-  });
 
-  document.getElementById("filterVillage").addEventListener("change", () => {
-      const selDist = document.getElementById("filterDistrict").value;
-      const selVill = document.getElementById("filterVillage").value;
-      if (!selDist || !selVill) return;
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        showUser(userCredential.user);
+      } catch (error) {
+        alert("Login Error: " + error.message);
+        console.error(error);
+      }
+    }
 
-      db.ref("community_entries").once("value", snapshot => {
-          const data = snapshot.val() || {};
-          const tbody = document.querySelector("#dataTable tbody");
-          tbody.innerHTML = "";
-          totalPopulation = 0;
-          countSecondary = 0;
-          countHigher = 0;
-          countGrad = 0;
-          allEntries = [];
-
-          Object.values(data).forEach(entry => {
-              if (entry.district === selDist && entry.village === selVill) {
-                  // Build table row
-                  const tr = document.createElement("tr");
-                  tr.innerHTML = `
-                    <td>${entry.district}</td>
-                    <td>${entry.village}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.dob}</td>
-                    <td>${entry.population}</td>
-                    <td>${entry.qualification}</td>
-                    <td>${entry.occupation || ""}</td>
-                    <td>${entry.gender || ""}</td>
-                    <td>${entry.maritalStatus || ""}</td>
-                    <td><a href="${entry.photoURL}" target="_blank">${entry.photoURL}</a></td>
-                    <td>${entry.fatherName}</td>
-                    <td>${entry.motherName}</td>
-                    <td>${entry.address}</td>
-                  `;
-                  tbody.appendChild(tr);
-                  allEntries.push([
-                      entry.district,
-                      entry.village,
-                      entry.name,
-                      entry.dob,
-                      entry.population,
-                      entry.qualification,
-                      entry.occupation || "",
-                      entry.gender || "",
-                      entry.maritalStatus || "",
-                      entry.photoURL,
-                      entry.fatherName,
-                      entry.motherName,
-                      entry.address
-                  ]);
-
-                  totalPopulation += Number(entry.population) || 0;
-                  if (entry.qualification === "Board of Secondary") countSecondary++;
-                  if (entry.qualification === "Higher Secondary") countHigher++;
-                  if (entry.qualification === "Graduation") countGrad++;
-              }
-          });
-
-          document.getElementById("totalPopulation").innerText = totalPopulation;
-          document.getElementById("countSecondary").innerText = countSecondary;
-          document.getElementById("countHigher").innerText = countHigher;
-          document.getElementById("countGrad").innerText = countGrad;
-          document.getElementById("dataTable").style.display = "table";
+    // Logout User
+    function logout() {
+      auth.signOut().then(() => {
+        document.getElementById("userDiv").classList.add("hidden");
+        document.getElementById("loginDiv").classList.remove("hidden");
+        toggleForms("login");
       });
-  });
+    }
 
-  function exportToExcel() {
-      const wb = XLSX.utils.book_new();
-      const headerRow = [
-        "District",
-        "Village",
-        "Name",
-        "DOB",
-        "Population",
-        "Qualification",
-        "Occupation",
-        "Gender",
-        "Marital Status",
-        "Photo URL",
-        "Father's Name",
-        "Mother's Name",
-        "Address"
-      ];
-      const wsData = [headerRow, ...allEntries];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Community Data");
-      XLSX.writeFile(wb, "community_data.xlsx");
-  }
+    // Show Logged In User Info
+    function showUser(user) {
+      document.getElementById("userName").textContent = user.displayName || "User";
+      document.getElementById("userEmail").textContent = user.email;
+      document.getElementById("userPhoto").src = user.photoURL || "";
 
-  function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-          .catch(error => {
-              document.getElementById("loginMessage").innerText = "Login failed: " + error.message;
-          });
-  }
-  function logout() {
-      auth.signOut();
-  }
-</script>
+      document.getElementById("registerDiv").classList.add("hidden");
+      document.getElementById("loginDiv").classList.add("hidden");
+      document.getElementById("userDiv").classList.remove("hidden");
+    }
 
+    // Auto-login
+    auth.onAuthStateChanged(user => {
+      if (user) showUser(user);
+      else toggleForms("login");
+    });
+  </script>
 </body>
 </html>
