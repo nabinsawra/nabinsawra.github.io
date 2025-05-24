@@ -47,11 +47,18 @@
 
         <label>Naam:</label>
         <input type="text" id="name" required>
-         <label for="gender">Gender:</label>
-        <select id="gender" required>
-            <option value="">--Select Village--</option>
+         <label>Gender:</label>
+        <select id="gender">
+            <option value="Male</option>
+            <option value="Higher Secondary">Female</option>
+            <option value="Graduation">Transgender</option>
         </select>
-
+        <label>MaritalStatus:</label>
+        <select id="maritalstatus">
+            <option value="Board of Secondary">Married</option>
+            <option value="Higher Secondary">Unmarried</option>
+            <option value="Graduation">Widow</option>
+        </select>
         <label>Janam Tithi (DOB):</label>
         <input type="date" id="dob" required>
 
@@ -122,6 +129,8 @@
                 <th>District</th>
                 <th>Village</th>
                 <th>Name</th>
+                <th>Gender</th>
+                <th>MaritalStatus</th>
                 <th>DOB</th>
                 <th>Population</th>
                 <th>Qualification</th>
@@ -180,6 +189,8 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
     const district = document.getElementById("district").value;
     const village = document.getElementById("village").value;
     const name = document.getElementById("name").value;
+    const village = document.getElementById("gender").value;
+    const village = document.getElementById("maritalstatus").value;
     const dob = document.getElementById("dob").value;
     const population = parseInt(document.getElementById("population").value);
     const qualification = document.getElementById("qualification").value;
@@ -192,6 +203,8 @@ document.getElementById("dataForm").addEventListener("submit", function(event) {
         district,
         village,
         name,
+        gender,
+        maritalstatus,
         dob,
         population,
         qualification,
@@ -265,6 +278,8 @@ document.getElementById("filterVillage").addEventListener("change", () => {
                     <td>${entry.district}</td>
                     <td>${entry.village}</td>
                     <td>${entry.name}</td>
+                    <td>${entry.gender}</td>
+                    <td>${entry.maritalstatus}</td>
                     <td>${entry.dob}</td>
                     <td>${entry.population}</td>
                     <td>${entry.qualification}</td>
@@ -276,7 +291,7 @@ document.getElementById("filterVillage").addEventListener("change", () => {
                 tableBody.appendChild(row);
 
                 allEntries.push([
-    entry.district, entry.village, entry.name, entry.dob, entry.population,
+    entry.district, entry.village, entry.name, entry.gender, entry.maritalstatus, entry.dob, entry.population,
     entry.qualification, entry.occupation || '', entry.fatherName, entry.motherName, entry.address
 ]);
 
@@ -300,7 +315,7 @@ document.getElementById("filterVillage").addEventListener("change", () => {
 function exportToExcel() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([
-        ["District", "Village", "Name", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"],
+        ["District", "Village", "Name", "Gender", "Maritalstatus", "DOB", "Population", "Qualification", "Occupation", "Father's Name", "Mother's Name", "Address"],
         ...allEntries
     ]);
     XLSX.utils.book_append_sheet(wb, ws, "Community Data");
@@ -330,6 +345,8 @@ const villagesByDistrict = {
 
 const districtDropdown = document.getElementById("district");
 const villageDropdown = document.getElementById("village");
+const genderDropdown = document.getElementById("gender");
+const maritalstatusDropdown = document.getElementById("maritalstatus");
 
 // Populate District Dropdown
 Object.keys(villagesByDistrict).forEach(district => {
