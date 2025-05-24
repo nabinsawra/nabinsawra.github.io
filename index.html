@@ -99,6 +99,11 @@
 
         <label>Address:</label>
         <input type="text" id="address" required>
+        <label>Upload Photo:</label>
+        <input type="file" id="photo" accept="image/*" required>
+        <button id="uploadPhotoBtn">Upload Photo</button>
+        <p id="uploadStatus"></p>
+
 
         <button type="submit" style="margin-top: 15px;">Add Entry</button>
     </form>
@@ -157,6 +162,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <script>
@@ -380,6 +387,32 @@ districtDropdown.addEventListener("change", () => {
         });
     }
 });
+    const storage = firebase.storage();
+
+document.getElementById("uploadPhotoBtn").addEventListener("click", async () => {
+  const photoFile = document.getElementById("photo").files[0];
+  const status = document.getElementById("uploadStatus");
+
+  if (!photoFile) {
+    status.innerText = "Please select a photo.";
+    return;
+  }
+
+  try {
+    const photoRef = storage.ref("photos/" + Date.now() + "_" + photoFile.name);
+    await photoRef.put(photoFile);
+
+    const photoURL = await photoRef.getDownloadURL();
+    status.style.color = "green";
+    status.innerText = "Photo uploaded successfully! URL: " + photoURL;
+    console.log("Photo URL:", photoURL);
+  } catch (error) {
+    console.error("Upload error:", error);
+    status.style.color = "red";
+    status.innerText = "Error uploading photo: " + error.message;
+  }
+});
+
 </script>
 
 </body>
