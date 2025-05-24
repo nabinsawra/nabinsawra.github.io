@@ -199,7 +199,6 @@
     </table>
 </div>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -230,7 +229,6 @@
   let countGrad = 0;
   let allEntries = [];
 
-  // ======= Auth State Listener =======
   auth.onAuthStateChanged(user => {
       if (user) {
           document.getElementById("loginSection").style.display = "none";
@@ -243,7 +241,6 @@
       }
   });
 
-  // ======= Populate District Dropdown for Form =======
   const districtDropdown = document.getElementById("district");
   const villageDropdown = document.getElementById("village");
   const villagesByDistrict = {
@@ -270,7 +267,6 @@
       }
   });
 
-  // ======= Photo Preview =======
   document.getElementById("photo").addEventListener("change", function() {
       const file = this.files[0];
       if (file) {
@@ -284,7 +280,6 @@
       }
   });
 
-  // ======= Form Submission =======
   document.getElementById("dataForm").addEventListener("submit", async function(event) {
       event.preventDefault();
 
@@ -348,7 +343,7 @@
       }
   });
 
-  // ======= Show/Hide List Buttons =======
+  
   document.getElementById("showListBtn").addEventListener("click", () => {
       document.getElementById("filters").style.display = "block";
       document.getElementById("hideListBtn").style.display = "block";
@@ -359,7 +354,6 @@
       document.getElementById("hideListBtn").style.display = "none";
   });
 
-  // ======= Filter District → Populate Filter Village =======
   document.getElementById("filterDistrict").addEventListener("change", () => {
       const selDist = document.getElementById("filterDistrict").value;
       const filterVill = document.getElementById("filterVillage");
@@ -374,7 +368,6 @@
       }
   });
 
-  // ======= When Filter Village Changes → Load and Display Entries =======
   document.getElementById("filterVillage").addEventListener("change", () => {
       const selDist = document.getElementById("filterDistrict").value;
       const selVill = document.getElementById("filterVillage").value;
@@ -410,8 +403,6 @@
                     <td>${entry.address}</td>
                   `;
                   tbody.appendChild(tr);
-
-                  // Prepare for summary / Excel
                   allEntries.push([
                       entry.district,
                       entry.village,
@@ -443,7 +434,6 @@
       });
   });
 
-  // ======= Export to Excel (including new columns) =======
   function exportToExcel() {
       const wb = XLSX.utils.book_new();
       const headerRow = [
@@ -467,7 +457,6 @@
       XLSX.writeFile(wb, "community_data.xlsx");
   }
 
-  // ======= Login & Logout Functions =======
   function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
